@@ -23,7 +23,7 @@ class CityExplorer:
     __feat = PolynomialFeatures(degree=2, include_bias=False)
 
     def __init__(self):
-        reader=csv.reader(open('/home/firat/Desktop/cities.csv','r'))
+        reader=csv.reader(open('cities.csv','r'))
         self.__actions={}
         self.__curState={}
         self.__path=[]
