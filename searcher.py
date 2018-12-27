@@ -1,5 +1,4 @@
 from cityexplorer import CityExplorer
-from cityexplorer import feat
 import time
 import matplotlib.pyplot as plt
 import csv
@@ -56,7 +55,7 @@ class treesearcher:
                 self.__train(self.curGame.path_size(),self.curGame.path())
 
     def __itrSearch(self,lookupModifier=100):
-        stateTensor = [self.curGame.state]
+        stateTensor = [self.curGame.getState()]
         actionBatch, movesId = self.curGame.action_batch_v2(lookupModifier)
         choice = self.nnet.predict(stateTensor, actionBatch)
         self.curGame.makeMove(movesId[int(choice[0])])
@@ -68,7 +67,7 @@ class treesearcher:
         if len(path)!=1:
             for moveNum in range(1, len(path)):
                 if(moveNum>=fromMove):
-                    self.nnet.train([testGame.state], testGame.getMove(int(path[moveNum]))*upSample), featurizer.featurizePathSize(result-ans.path_size())
+                    self.nnet.train([testGame.getState()], testGame.getMove(int(path[moveNum]))*upSample), featurizer.featurizePathSize(result-ans.path_size())
                 if fromMove>1 and fromMove==moveNum:
                     ans=copy.deepcopy(testGame)
                 testGame.makeMove(path[moveNum])

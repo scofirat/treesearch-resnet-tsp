@@ -20,7 +20,6 @@ class Estimator():
     def residual_block(self, inputLayer, filters, kernel_size):
 
             shortcut = inputLayer
-
             residual_layer = tf.layers.conv2d(inputLayer, filters, kernel_size=(kernel_size, kernel_size),
                                               strides=(1, 1), padding='same', use_bias=False)
             residual_layer = tf.layers.batch_normalization(residual_layer, axis=3,
@@ -38,10 +37,13 @@ class Estimator():
     """
     def predict(self,gameState,actionBatch):
         return self.sess.run(self.bestMove,{self.gameState:gameState,self.actionBatch:actionBatch,self.isTraining:False})
+
     def train(self,gameState,actionBatch,result):
         return self.sess.run(self.optimize,{self.gameState:gameState,self.actionBatch:actionBatch,self.result:result,self.isTraining:True})
+
     def bestMoves(self,gameState,actionBatch):
         return self.sess.run(self.bestMoves,{self.gameState:gameState,self.actionBatch:actionBatch,self.isTraining:False})
+
     def __buildGraph(self):
         self.isTraining=tf.placeholder(tf.bool)
         self.gameState=tf.placeholder(tf.float32,shape=[1,10,10,8])
