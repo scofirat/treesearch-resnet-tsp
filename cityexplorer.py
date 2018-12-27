@@ -109,8 +109,7 @@ class CityExplorer:
         """Returns the cost of travelling from the current city to city of id"""
         try:
             action = self.__actions[id]
-            pureDistance = math.sqrt(
-                ((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"]) ** 2))
+            pureDistance = math.sqrt((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"]) ** 2)
             if (len(self.__path))%10==0:
                 if not isPrime(self.__curState["id"]):
                     return pureDistance*1.1
@@ -182,7 +181,7 @@ class CityExplorer:
     def batchMove(self,moveIds):
         for id in moveIds:
             if len(self.__actions)==0:
-                self.__actions[0]=self.__path[0]
+                self.__actions[0]=self.__initCity
             self.__pathSize+=self.distanceTo(id)
             self.__path.append(id)
             self.__curState=self.__actions.pop(id)
@@ -207,3 +206,6 @@ class CityExplorer:
 
     def getState(self):
         return self.__state
+
+    def training_features(self,result):
+        return featurizer.featurizePathSize(result - self.path_size())

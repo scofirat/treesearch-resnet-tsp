@@ -64,7 +64,7 @@ class treesearcher:
         if len(path)!=1:
             for moveNum in range(1, len(path)):
                 if(moveNum>=fromMove):
-                    self.nnet.train([testGame.getState()], testGame.getMove(int(path[moveNum]))*upSample), featurizer.featurizePathSize(result-ans.path_size())
+                    self.nnet.train([testGame.getState()], testGame.getMove(int(path[moveNum]))*upSample, testGame.training_features(result))
                 if fromMove>1 and fromMove==moveNum:
                     ans=copy.deepcopy(testGame)
                 testGame.makeMove(path[moveNum])
