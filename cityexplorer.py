@@ -70,43 +70,37 @@ class CityExplorer:
         :param maxLookup: maximum size to fetch/lookup
         :return: A square list of floats representing different actions, and moveIds of those actions of the same order
         """
-        ans=[[]]
+        ans=[]
         ids=[]
         sizeToFetch=min(size_to_search*2,maxLookup)
         if size_to_search>len(self.__actions):
             keys=self.__actions.keys()
             for id in keys:
                 ids.append(id)
-                if ans==[[]]:
-                    ans=self.getMove(id)
-                else:
-                    ans=np.append(ans,id,axis=0)
-            return ans,ids
+                move = self.__getMoveRaw(id)
+                ans.append(move)
+            return self.__feat.fit_transform(ans),ids
         distance,ind = self.__tree.query([[self.__curState["x"],self.__curState["y"]]],k=sizeToFetch)
         idInd=0
         while True:
             if ind[0][idInd] in self.__actions and len(ans)<size_to_search:
                 ids.append(ind[0][idInd])
-                if ans==[[]]:
-                    ans=self.getMove(ind[0][idInd])
-                else:
-                    ans=np.append(ans,self.getMove(ind[0][idInd]),axis=0)
+                move=self.__getMoveRaw(ind[0][idInd])
+                ans.append(move)
             idInd+=1
             if len(ans)>=size_to_search:
-                return ans,ids
+                return self.__feat.fit_transform(ans),ids
             if sizeToFetch==idInd:
                 if maxLookup<=sizeToFetch:
                     if ans== [[]]:
                         toAppend = rnd.choices(list(self.__actions.keys()), k=size_to_search * 3)
                         for id in toAppend:
                             ids.append(id)
-                            if ans == [[]]:
-                                ans = self.getMove(id)
-                            else:
-                                ans = np.append(ans, self.getMove(id), axis=0)
+                            move = self.__getMoveRaw(id)
+                            ans.append(move)
                     return ans, ids
-                elif  not ans==[[]]:
-                    return ans,ids
+                elif  not len(ans)==0:
+                    return self.__feat.fit_transform(ans),ids
                 else:
                     sizeToFetch=min(sizeToFetch*2,maxLookup)
                     distance, ind = self.__tree.query([[self.__curState["x"], self.__curState["y"]]], k=sizeToFetch)
@@ -119,11 +113,10 @@ class CityExplorer:
                 ((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"]) ** 2))
             if (len(self.__path))%10==0:
                 if not isPrime(self.__curState["id"]):
-                    return math.sqrt(((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"])**2))\
-                           * 1.1
+                    return pureDistance*1.1
                 else:
-                    return math.sqrt((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"]) ** 2)
-            return math.sqrt((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"])**2)
+                    return pureDistance
+            return pureDistance
         except KeyError:
             return 0.0
 
@@ -164,15 +157,18 @@ class CityExplorer:
 
     def getMove(self,id):
         """Gets the move features"""
-        move=self.__actions[id]
-        try :
+        return self.__feat.fit_transform([self.__getMoveRaw(id)])
+
+    def __getMoveRaw(self,id):
+        move = self.__actions[id]
+        try:
             move["distanceTo"]
             move["dx"]
         except KeyError:
-            move["distanceTo"]=self.distanceTo(id)
-            move["dx"]=move["x"]-self.__curState["x"]
-            move["dy"]=move["y"]-self.__curState["y"]
-        return self.__feat.fit_transform([featurizer.featurizeAction(move)])
+            move["distanceTo"] = self.distanceTo(id)
+            move["dx"] = move["x"] - self.__curState["x"]
+            move["dy"] = move["y"] - self.__curState["y"]
+        return featurizer.featurizeAction(move)
 
     def path(self):
         return self.__path

@@ -31,11 +31,8 @@ class treesearcher:
         writer=csv.writer(open(fileName,'w+'))
         for move in self.curGame.path():
             writer.writerow([str(move)])
-
         self.curGame=CityExplorer()
         print("Time Elapsed="+str(time.time()-time1))
-
-
 
     def __searchGame(self,lookup=100,train=True,plot=False):
         if plot:

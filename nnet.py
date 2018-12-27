@@ -8,7 +8,6 @@ class Estimator():
         config.gpu_options.allow_growth = True
         self.sess = tf.Session(config=config)
         self.__buildGraph()
-
         saver=tf.train.Saver()
         try:
             saver.restore(sess=self.sess,save_path=self.dir+"/model.ckpt")
@@ -16,6 +15,7 @@ class Estimator():
         except ValueError:
             print("Error occurred, initializing variables")
             self.sess.run(tf.global_variables_initializer())
+            self.save()
 
     def residual_block(self, inputLayer, filters, kernel_size):
 
