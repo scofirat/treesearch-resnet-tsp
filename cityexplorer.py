@@ -40,6 +40,8 @@ class CityExplorer:
                              "y":y}
 
         self.__tree=KDTree(self.__all_actions)
+        self.__initCity=self.__actions[0]
+
         self.makeMove(0)
         self.__state=[[[0.0]*8]*10]*10
         for move in self.__actions.values():
@@ -75,7 +77,10 @@ class CityExplorer:
             keys=self.__actions.keys()
             for id in keys:
                 ids.append(id)
-                ans=np.append(ans,self.getMove(id),axis=0)
+                if ans==[[]]:
+                    ans=self.getMove(id)
+                else:
+                    ans=np.append(ans,id,axis=0)
             return ans,ids
         distance,ind = self.__tree.query([[self.__curState["x"],self.__curState["y"]]],k=sizeToFetch)
         idInd=0
@@ -100,7 +105,7 @@ class CityExplorer:
                             else:
                                 ans = np.append(ans, self.getMove(id), axis=0)
                     return ans, ids
-                elif len(ans)>0:
+                elif  not ans==[[]]:
                     return ans,ids
                 else:
                     sizeToFetch=min(sizeToFetch*2,maxLookup)
@@ -121,6 +126,7 @@ class CityExplorer:
             return math.sqrt((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"])**2)
         except KeyError:
             return 0.0
+
     def makeMove(self,id):
         try:
             x = int(self.__actions[id]["x"] / 512)
@@ -149,12 +155,12 @@ class CityExplorer:
         self.__pathSize += self.distanceTo(id)
         self.__curState=self.__actions.pop(id)
         self.__path.append(id)
-        if len(self.__actions)==0 and not self.__path[-1]==0 and len(self.__path)>10:
-            self.__actions[0]=self.__path[0]
+        if len(self.__actions)==0 and not self.__path[-1]==0 and len(self.__path)>1:
+            self.__actions[0]=self.__initCity
 
     def isCompleted(self):
         """If the tour has been completed"""
-        return len(self.__actions)==0 and self.__path[-1]==0 and len(self.__path)>10
+        return len(self.__actions)==0 and self.__path[-1]==0 and len(self.__path)>1
 
     def getMove(self,id):
         """Gets the move features"""
