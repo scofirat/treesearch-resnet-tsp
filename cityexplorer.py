@@ -7,7 +7,7 @@ from sklearn.preprocessing import PolynomialFeatures
 import numpy as np
 
 prime={}
-def isPrime(num):
+def is_prime(num):
     if num in prime:
         return prime[num]
     for i in range(2,int(num**0.5+1)):
@@ -25,9 +25,9 @@ class CityExplorer:
     def __init__(self):
         reader=csv.reader(open('cities.csv','r'))
         self.__actions={}
-        self.__curState={}
+        self.__cur_state={}
         self.__path=[]
-        self.__pathSize=0
+        self.__path_size=0
         self.__all_actions=[]
         next(reader,None)
         for row in reader:
@@ -42,7 +42,7 @@ class CityExplorer:
         self.__tree=KDTree(self.__all_actions)
         self.__initCity=self.__actions[0]
 
-        self.makeMove(0)
+        self.make_move(0)
         self.__state=[[[0.0]*8]*10]*10
         for move in self.__actions.values():
             distance = self.distanceTo(move["id"])
@@ -51,9 +51,9 @@ class CityExplorer:
             self.__state[clusterX][clusterY][0] += 1
             self.__state[clusterX][clusterY][1] = (self.__state[clusterX][clusterY][1] * (
                     self.__state[clusterX][clusterY][0] - 1) + distance) / self.__state[clusterX][clusterY][0]
-            self.__state[clusterX][clusterY][2]+=float(isPrime(move["id"]))
-            dx= move["x"]-self.__curState["x"]
-            dy = move["y"]-self.__curState["y"]
+            self.__state[clusterX][clusterY][2]+=float(is_prime(move["id"]))
+            dx= move["x"]-self.__cur_state["x"]
+            dy = move["y"]-self.__cur_state["y"]
             self.__state[clusterX][clusterY][3]=(self.__state[clusterX][clusterY][3] * (
                     self.__state[clusterX][clusterY][0] - 1) + dx) / self.__state[clusterX][clusterY][0]
             self.__state[clusterX][clusterY][4]=(self.__state[clusterX][clusterY][1] * (
@@ -62,7 +62,7 @@ class CityExplorer:
             self.__state[clusterX][clusterY][6]=float(len(self.__path)%10>5)
             self.__state[clusterX][clusterY][7]=float(len(self.__path)%10<5)
 
-    def action_batch_v2(self,size_to_search,maxLookup=10000):
+    def action_batch(self,size_to_search,max_lookup=10000):
         """
         Gets action of maximum size sizeToSearch closest to the current point
         Actions are already featurized
@@ -72,7 +72,7 @@ class CityExplorer:
         """
         ans=[]
         ids=[]
-        sizeToFetch=min(size_to_search*2,maxLookup)
+        sizeToFetch=min(size_to_search*2,max_lookup)
         if size_to_search>len(self.__actions):
             keys=self.__actions.keys()
             for id in keys:
@@ -80,7 +80,7 @@ class CityExplorer:
                 move = self.__getMoveRaw(id)
                 ans.append(move)
             return self.__feat.fit_transform(ans),ids
-        distance,ind = self.__tree.query([[self.__curState["x"],self.__curState["y"]]],k=sizeToFetch)
+        distance,ind = self.__tree.query([[self.__cur_state["x"],self.__cur_state["y"]]],k=sizeToFetch)
         idInd=0
         while True:
             if ind[0][idInd] in self.__actions and len(ans)<size_to_search:
@@ -91,7 +91,7 @@ class CityExplorer:
             if len(ans)>=size_to_search:
                 return self.__feat.fit_transform(ans),ids
             if sizeToFetch==idInd:
-                if maxLookup<=sizeToFetch:
+                if max_lookup<=sizeToFetch:
                     if ans== [[]]:
                         toAppend = rnd.choices(list(self.__actions.keys()), k=size_to_search * 3)
                         for id in toAppend:
@@ -102,16 +102,16 @@ class CityExplorer:
                 elif  not len(ans)==0:
                     return self.__feat.fit_transform(ans),ids
                 else:
-                    sizeToFetch=min(sizeToFetch*2,maxLookup)
-                    distance, ind = self.__tree.query([[self.__curState["x"], self.__curState["y"]]], k=sizeToFetch)
+                    sizeToFetch=min(sizeToFetch*2,max_lookup)
+                    distance, ind = self.__tree.query([[self.__cur_state["x"], self.__cur_state["y"]]], k=sizeToFetch)
 
     def distanceTo(self,id):
         """Returns the cost of travelling from the current city to city of id"""
         try:
             action = self.__actions[id]
-            pureDistance = math.sqrt((self.__curState["x"] - action["x"]) ** 2 + (self.__curState["y"] - action["y"]) ** 2)
+            pureDistance = math.sqrt((self.__cur_state["x"] - action["x"]) ** 2 + (self.__cur_state["y"] - action["y"]) ** 2)
             if (len(self.__path))%10==0:
-                if not isPrime(self.__curState["id"]):
+                if not is_prime(self.__cur_state["id"]):
                     return pureDistance*1.1
                 else:
                     return pureDistance
@@ -119,20 +119,20 @@ class CityExplorer:
         except KeyError:
             return 0.0
 
-    def makeMove(self,id):
+    def make_move(self,id):
         try:
             x = int(self.__actions[id]["x"] / 512)
             y = int(self.__actions[id]["y"] / 340)
-            pureDistance = math.sqrt((self.__curState["x"] - self.__actions[id]["x"]) ** 2 + (
-                        self.__curState["y"] - self.__actions[id]["y"]) ** 2)
+            pureDistance = math.sqrt((self.__cur_state["x"] - self.__actions[id]["x"]) ** 2 + (
+                        self.__cur_state["y"] - self.__actions[id]["y"]) ** 2)
             self.__state[x][y][0] -= 1
             try:
                 self.__state[x][y][1] = (self.__state[x][y][1] * (self.__state[x][y][0] + 1) - pureDistance) / self.__state[x][y][0]
             except ZeroDivisionError:
                 self.__state[x][y][1] = -1.0
-            self.__state[x][y][2] -= float(isPrime(id))
-            dx=self.__actions[id]["x"]-self.__curState["x"]
-            dy =  self.__actions[id]["y"]-self.__curState["y"]
+            self.__state[x][y][2] -= float(is_prime(id))
+            dx=self.__actions[id]["x"]-self.__cur_state["x"]
+            dy =  self.__actions[id]["y"]-self.__cur_state["y"]
             for x in range(0,10):
                 for y in range(0,10):
                     self.__state[x][y][1] = math.sqrt((self.__state[x][y][3]-dx)**2+(self.__state[x][y][4]-dy)**2)
@@ -144,17 +144,17 @@ class CityExplorer:
 
         except KeyError:
             pass
-        self.__pathSize += self.distanceTo(id)
-        self.__curState=self.__actions.pop(id)
+        self.__path_size += self.distanceTo(id)
+        self.__cur_state=self.__actions.pop(id)
         self.__path.append(id)
         if len(self.__actions)==0 and not self.__path[-1]==0 and len(self.__path)>1:
             self.__actions[0]=self.__initCity
 
-    def isCompleted(self):
+    def is_completed(self):
         """If the tour has been completed"""
         return len(self.__actions)==0 and self.__path[-1]==0 and len(self.__path)>1
 
-    def getMove(self,id):
+    def get_move(self,id):
         """Gets the move features"""
         return self.__feat.fit_transform([self.__getMoveRaw(id)])
 
@@ -165,26 +165,26 @@ class CityExplorer:
             move["dx"]
         except KeyError:
             move["distanceTo"] = self.distanceTo(id)
-            move["dx"] = move["x"] - self.__curState["x"]
-            move["dy"] = move["y"] - self.__curState["y"]
-        return featurizer.featurizeAction(move)
+            move["dx"] = move["x"] - self.__cur_state["x"]
+            move["dy"] = move["y"] - self.__cur_state["y"]
+        return featurizer.featurize_action(move)
 
     def path(self):
         return self.__path
 
     def path_size(self):
-        return self.__pathSize
+        return self.__path_size
 
     def path_size_feature(self):
-        return featurizer.featurizePathSize(self.pathSize())
+        return featurizer.featurize_path_size(self.path_size())
 
-    def batchMove(self,moveIds):
+    def batch_move(self,moveIds):
         for id in moveIds:
             if len(self.__actions)==0:
                 self.__actions[0]=self.__initCity
-            self.__pathSize+=self.distanceTo(id)
+            self.__path_size+=self.distanceTo(id)
             self.__path.append(id)
-            self.__curState=self.__actions.pop(id)
+            self.__cur_state=self.__actions.pop(id)
         self.__state=[[[0.0]*8]*10]*10
         for move in self.__actions.values():
             distance = self.distanceTo(move["id"])
@@ -193,9 +193,9 @@ class CityExplorer:
             self.__state[clusterX][clusterY][0] += 1
             self.__state[clusterX][clusterY][1] = (self.__state[clusterX][clusterY][1] * (
                     self.__state[clusterX][clusterY][0] - 1) + distance) / self.__state[clusterX][clusterY][0]
-            self.__state[clusterX][clusterY][2]+=float(isPrime(move["id"]))
-            dx= move["x"]-self.__curState["x"]
-            dy = move["y"]-self.__curState["y"]
+            self.__state[clusterX][clusterY][2]+=float(is_prime(move["id"]))
+            dx= move["x"]-self.__cur_state["x"]
+            dy = move["y"]-self.__cur_state["y"]
             self.__state[clusterX][clusterY][3]=(self.__state[clusterX][clusterY][3] * (
                     self.__state[clusterX][clusterY][0] - 1) + dx) / self.__state[clusterX][clusterY][0]
             self.__state[clusterX][clusterY][4]=(self.__state[clusterX][clusterY][1] * (
@@ -204,8 +204,8 @@ class CityExplorer:
             self.__state[clusterX][clusterY][6]=float(len(self.__path)%10>5)
             self.__state[clusterX][clusterY][7]=float(len(self.__path)%10<5)
 
-    def getState(self):
+    def get_state(self):
         return self.__state
 
     def training_features(self,result):
-        return featurizer.featurizePathSize(result - self.path_size())
+        return featurizer.featurize_path_size(result - self.path_size())
